@@ -16,20 +16,25 @@
       justify-content: center;
       height: 100vh;
       background-color: #f4f4f4;
+      text-align: center;
     }
 
     h1 {
       color: #333;
+      text-align: center;
+      width: 100%;
     }
 
     form {
       display: flex;
       flex-direction: column;
-      align-items: start;
+      align-items: center;
       background: white;
       padding: 20px;
       border-radius: 8px;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 300px;
     }
 
     label,
@@ -40,8 +45,11 @@
 
     input {
       padding: 8px;
+      width: 100%;
+      max-width: 100px;
       border: 1px solid #ccc;
       border-radius: 4px;
+      text-align: center;
     }
 
     button {
@@ -66,18 +74,37 @@
   <script>
     async function handleSubmit (event) {
       const infoWindow = document.getElementById('info-window');
-      infoWindow.textContent = 'Submitting ... Please wait for ~2mins';
       event.preventDefault();
+      infoWindow.textContent = 'Submitting ... Please wait for ~2 mins';
+
       const codeInput = document.getElementById('code').value;
-      const response = await fetch('/verify', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: `code=${codeInput}`
-      });
-      const result = await response.json();
-      infoWindow.textContent = result.message;
+
+      try {
+        const response = await fetch('/verify', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: `code=${codeInput}`
+        });
+
+        const result = await response.json();
+
+        infoWindow.textContent = result.message;
+      } catch (error) {
+        infoWindow.textContent = 'There is a server error. Expected return time: ';
+        calculateNextReturnTime();
+      }
+    }
+
+    function calculateNextReturnTime () {
+      const now = new Date();
+      let next21UTC = new Date(now);
+      next21UTC.setUTCHours(21, 0, 0, 0);
+      if (now.getUTCHours() >= 21) {
+        next21UTC.setUTCDate(next21UTC.getUTCDate() + 1);
+      }
+      document.getElementById("info-window").textContent += next21UTC.toLocaleString();
     }
 
     async function loadDeployStatus () {
@@ -110,7 +137,7 @@
 
     window.onload = function () {
       loadDeployStatus();
-      setInterval(loadDeployStatus, 3000);  // Fetch status every 3 seconds
+      setInterval(loadDeployStatus, 3000);
     };
   </script>
 </head>
