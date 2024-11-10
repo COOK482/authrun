@@ -2,6 +2,8 @@
 
 This project provides a Flask-based web interface for securely running scripts with two-factor authentication (2FA) and displaying script execution status. It's designed to manage secure, authenticated access to any backend script, enforcing a cooldown period between executions and showing the latest status update.
 
+While this system is designed to serve as the deploy admin for simplified deployment in COOK482, it can be adapted for various other applications requiring secure script execution with 2FA and execution tracking.
+
 ### Project Structure
 
 - **`app.py`**: Main Flask application file
