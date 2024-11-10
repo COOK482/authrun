@@ -62,6 +62,7 @@
       color: #ff6600;
     }
   </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/timeago.js/4.0.2/timeago.min.js"></script>
   <script>
     async function handleSubmit (event) {
       const infoWindow = document.getElementById('info-window');
@@ -79,17 +80,6 @@
       infoWindow.textContent = result.message;
     }
 
-    function timeAgo (timestamp) {
-      const secondsAgo = Math.floor((new Date() - new Date(timestamp)) / 1000);
-      if (secondsAgo < 60) return `${secondsAgo} seconds ago`;
-      const minutesAgo = Math.floor(secondsAgo / 60);
-      if (minutesAgo < 60) return `${minutesAgo} minutes ago`;
-      const hoursAgo = Math.floor(minutesAgo / 60);
-      if (hoursAgo < 24) return `${hoursAgo} hours ago`;
-      const daysAgo = Math.floor(hoursAgo / 24);
-      return `${daysAgo} days ago`;
-    }
-
     async function loadDeployStatus () {
       const statusWindow = document.getElementById('status-window');
       try {
@@ -103,7 +93,7 @@
             let time = entry.time || "Unknown time";
             const status = entry.status || "Unknown status";
             if (time !== "Unknown time") {
-              time = timeAgo(time);
+              time = timeago.format(new Date(time));
             }
             const entryDiv = document.createElement('div');
             entryDiv.textContent = `${time} - ${status}`;
