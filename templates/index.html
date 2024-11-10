@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>COOK482 Deploy Admin</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background-color: #f4f4f4;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      align-items: start;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    label,
+    input,
+    button {
+      margin: 8px 0;
+    }
+
+    input {
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    button {
+      padding: 10px 20px;
+      background-color: #007bff;
+      border: none;
+      border-radius: 4px;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    #info-window {
+      margin-top: 20px;
+      color: #ff6600;
+    }
+  </style>
+  <script>
+    async function handleSubmit (event) {
+      const infoWindow = document.getElementById('info-window');
+      infoWindow.textContent = 'Submitting ... Please wait for ~2mins';
+      event.preventDefault();
+      const codeInput = document.getElementById('code').value;
+      const response = await fetch('/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `code=${codeInput}`
+      });
+      const result = await response.json();
+      infoWindow.textContent = result.message;
+    }
+
+    function timeAgo (timestamp) {
+      const secondsAgo = Math.floor((new Date() - new Date(timestamp)) / 1000);
+      if (secondsAgo < 60) return `${secondsAgo} seconds ago`;
+      const minutesAgo = Math.floor(secondsAgo / 60);
+      if (minutesAgo < 60) return `${minutesAgo} minutes ago`;
+      const hoursAgo = Math.floor(minutesAgo / 60);
+      if (hoursAgo < 24) return `${hoursAgo} hours ago`;
+      const daysAgo = Math.floor(hoursAgo / 24);
+      return `${daysAgo} days ago`;
+    }
+
+    async function loadDeployStatus () {
+      const statusWindow = document.getElementById('status-window');
+      try {
+        const response = await fetch('/get_deploy_status');
+        if (!response.ok) throw new Error('Failed to fetch deployment status');
+        const data = await response.json();
+
+        statusWindow.innerHTML = "<h2>Deployment History</h2>";
+        if (data.history && data.history.length > 0) {
+          data.history.reverse().forEach(entry => {
+            let time = entry.time || "Unknown time";
+            const status = entry.status || "Unknown status";
+            if (time !== "Unknown time") {
+              time = timeAgo(time);
+            }
+            const entryDiv = document.createElement('div');
+            entryDiv.textContent = `${time} - ${status}`;
+            statusWindow.appendChild(entryDiv);
+          });
+        } else {
+          statusWindow.innerHTML += "<p>No deployment history available.</p>";
+        }
+      } catch (error) {
+        statusWindow.innerHTML = "<p>Error loading deployment history.</p>";
+        console.error("Error loading deployment history:", error);
+      }
+    }
+
+    window.onload = function () {
+      loadDeployStatus();
+      setInterval(loadDeployStatus, 3000);  // Fetch status every 3 seconds
+    };
+  </script>
+</head>
+
+<body>
+  <h1>Two Factor Authentication</h1>
+  <form onsubmit="handleSubmit(event)" aria-labelledby="auth-code-form">
+    <label for="code">Enter Authentication Code:</label>
+    <input type="text" id="code" name="code">
+    <button type="submit">Submit</button>
+  </form>
+  <div id="info-window" role="alert"></div>
+
+  <div id="status-window" role="alert"></div>
+</body>
+
+</html>

@@ -1,0 +1,7 @@
+/env/
+/priv_sets.py
+__pycache__
+/qrcode.png
+/test_script_output.txt
+__pycache__
+/history.json
