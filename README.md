@@ -6,7 +6,7 @@ While this system is designed to serve as the deploy admin for simplified deploy
 
 ### Project Structure
 
-- **`app.py`**: Main Flask application file
+- **`app.py`**: Main Flask application file with an optional debug mode
 - **`history.json`**: Logs script execution history
 - **`env/`**: Virtual environment folder
 - **`priv_sets.example.py`**: Example configuration file for private settings
@@ -23,23 +23,37 @@ While this system is designed to serve as the deploy admin for simplified deploy
 
 Install necessary dependencies with:
 
-```bash
+```
 pip install -r requirements.txt
 ```
 
 ### Configuration
 
-1. **2FA Setup**: In `priv_sets.py`:
+1. 2FA Setup: copy `priv_sets.example.py` to `priv_sets.py`
    - Generate a `SECRET_KEY` using `pyotp.random_base32()`.
    - Set `SCRIPT_PATH` to the path of the script you want to execute.
-   - Optionally set `QR_CODE_DESCRIPTION` and `QR_CODE_ISSUER`.
+   - Optionally set `QR_CODE_DESCRIPTION` and `QR_CODE_ISSUER` if you want to generate QR Code with description and issuer.
 2. **Generate QR Code**: Run `qrcode_gen.py` to create a `qrcode.png` image, which can be scanned with an authenticator app for 2FA setup.
+
+### Debug Mode
+
+To use alternative settings for testing, you can run the application in debug mode. This mode uses shorter lockout durations and different script paths:
+
+```
+python app.py --debug
+```
+
+In debug mode, the following settings will apply:
+
+- **`DEBUG_SCRIPT_PATH`**: Path for testing scripts (e.g., `test_script.sh`).
+- **`DEBUG_LOCKOUT_DURATION`**: Cooldown duration for debug mode.
+- **`DEBUG_DEPLOY_HISTORY_FILE`**: History file for debugging purposes (e.g., `history_debug.json`).
 
 ### Usage
 
 1. **Run the Application**:
 
-   ```bash
+   ```
    python app.py
    ```
 
@@ -51,7 +65,7 @@ pip install -r requirements.txt
 
 ### Cooldown Period
 
-A 3-minute lockout period is enforced after each execution to prevent multiple runs in quick succession.
+A lockout period is enforced after each execution to prevent multiple runs in quick succession. The duration is 3 minutes in normal mode and 1 second in debug mode.
 
 ### Example Endpoint Usage
 
@@ -62,5 +76,6 @@ A 3-minute lockout period is enforced after each execution to prevent multiple r
 
 - Keep `priv_sets.py` secure to protect sensitive information.
 - Customize `index.html` within the `templates` directory to modify the web interface.
+- Use `--debug` for testing purposes without affecting production data.
 
 This system can securely run various scripts, not limited to deployments, with 2FA authorization and status monitoring.

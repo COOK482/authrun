@@ -1,3 +1,4 @@
+import sys
 from flask import Flask, render_template, request, jsonify
 import subprocess
 import threading
@@ -5,21 +6,40 @@ import time
 import pyotp
 import json
 from datetime import datetime, timezone
-from priv_sets import SECRET_KEY, SCRIPT_PATH
+from priv_sets import (
+    SECRET_KEY,
+    SCRIPT_PATH,
+    DEBUG_SCRIPT_PATH,
+    LOCKOUT_DURATION,
+    DEBUG_LOCKOUT_DURATION,
+    DEPLOY_HISTORY_FILE,
+    DEBUG_DEPLOY_HISTORY_FILE,
+)
+
+# Determine if debug mode is enabled
+debug_mode = "--debug" in sys.argv
+
+# Select appropriate settings based on debug mode
+selected_secret_key = SECRET_KEY
+selected_script_path = DEBUG_SCRIPT_PATH if debug_mode else SCRIPT_PATH
+selected_lockout_duration = (
+    DEBUG_LOCKOUT_DURATION if debug_mode else LOCKOUT_DURATION
+)
+selected_history_file = (
+    DEBUG_DEPLOY_HISTORY_FILE if debug_mode else DEPLOY_HISTORY_FILE
+)
 
 app = Flask(__name__)
-totp = pyotp.TOTP(SECRET_KEY)
+totp = pyotp.TOTP(selected_secret_key)
 
 last_deploy_time = 0
 last_deploy_status = "Not deployed yet"
-LOCKOUT_DURATION = 180
-DEPLOY_HISTORY_FILE = "history.json"
 deploy_process = None
 
 
 def save_deploy_history():
     try:
-        with open(DEPLOY_HISTORY_FILE, "r") as f:
+        with open(selected_history_file, "r") as f:
             history = json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         history = []
@@ -35,7 +55,7 @@ def save_deploy_history():
 
     history = history[-5:]
 
-    with open(DEPLOY_HISTORY_FILE, "w") as f:
+    with open(selected_history_file, "w") as f:
         json.dump(history, f)
 
 
@@ -60,7 +80,10 @@ def index():
 def verify():
     global last_deploy_time, last_deploy_status, deploy_process
     current_time = time.time()
-    if current_time - last_deploy_time < LOCKOUT_DURATION or deploy_process:
+    if (
+        current_time - last_deploy_time < selected_lockout_duration
+        or deploy_process
+    ):
         return jsonify(
             {
                 "message": "Backend is deploying or cooling down, please wait.",
@@ -73,7 +96,7 @@ def verify():
         last_deploy_time = current_time
         last_deploy_status = "Deploying"
         deploy_process = subprocess.Popen(
-            ["/bin/zsh", SCRIPT_PATH],
+            ["/bin/zsh", selected_script_path],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
@@ -91,7 +114,7 @@ def verify():
 @app.route("/get_deploy_status", methods=["GET"])
 def get_deploy_status():
     try:
-        with open(DEPLOY_HISTORY_FILE, "r") as f:
+        with open(selected_history_file, "r") as f:
             history = json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         history = []
