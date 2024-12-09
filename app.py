@@ -14,6 +14,7 @@ from priv_sets import (
     DEBUG_LOCKOUT_DURATION,
     DEPLOY_HISTORY_FILE,
     DEBUG_DEPLOY_HISTORY_FILE,
+    LOG_FILE,
 )
 
 # Determine if debug mode is enabled
@@ -62,11 +63,24 @@ def save_deploy_history():
 def update_deploy_status():
     global last_deploy_status, deploy_process
     if deploy_process:
-        deploy_process.wait()
+        # Wait for the process to finish and capture output
+        stdout, stderr = deploy_process.communicate()
         exit_code = deploy_process.returncode
-        last_deploy_status = (
-            "Deploy succeeded" if exit_code == 0 else "Deploy failed"
-        )
+
+        # Update the status based on the return code
+        if exit_code == 0:
+            last_deploy_status = "Deploy succeeded"
+        else:
+            last_deploy_status = "Deploy failed"
+
+            # Write stdout and stderr to the log file on failure
+            with open(LOG_FILE, "a") as log_file:
+                log_file.write(
+                    f"Deployment failed at {datetime.now(timezone.utc).isoformat()}\n"
+                )
+                log_file.write("STDOUT:\n" + stdout.decode("utf-8") + "\n")
+                log_file.write("STDERR:\n" + stderr.decode("utf-8") + "\n\n")
+
         deploy_process = None
         save_deploy_history()
 
