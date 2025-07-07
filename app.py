@@ -47,9 +47,11 @@ def save_deploy_history():
 
     history.append(
         {
-            "time": datetime.fromtimestamp(
-                last_deploy_time, tz=timezone.utc
-            ).isoformat(),
+            "time": (
+                datetime.fromtimestamp(
+                    last_deploy_time, tz=timezone.utc
+                ).isoformat()
+            ),
             "status": last_deploy_status,
         }
     )
@@ -110,14 +112,16 @@ def verify():
         last_deploy_time = current_time
         last_deploy_status = "Deploying"
         deploy_process = subprocess.Popen(
-            ["/bin/zsh", selected_script_path],
+            ["/bin/bash", selected_script_path],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
         threading.Thread(target=update_deploy_status).start()
         return jsonify(
             {
-                "message": "Auth success. Deployment script is running. Please wait for ~2 mins.",
+                "message": (
+                    "Auth success. Deployment script is running. Please wait for ~2 mins."
+                ),
                 "success": True,
             }
         )
